@@ -1,9 +1,15 @@
+import { ConfigService, ConfigType } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
-import { AppModule } from './app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import 'reflect-metadata';
+import { AppModule } from './app.module';
+import appConfig from './config/app.config';
 
 async function bootstrap() {
     const app = await NestFactory.create(AppModule, { cors: true });
+    const configService = app.get(ConfigService);
+    const { http } = configService.get('app') as ConfigType<typeof appConfig>;
+
     const config = new DocumentBuilder()
         .setTitle('Homework API')
         .setVersion('1.0')
@@ -37,6 +43,6 @@ async function bootstrap() {
         jsonDocumentUrl: 'api/json',
     });
 
-    await app.listen(process.env.PORT ?? 3000);
+    await app.listen(http.port);
 }
 bootstrap();

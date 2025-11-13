@@ -8,10 +8,10 @@ export class CreateUsersTable1760296278140 implements MigrationInterface {
                 columns: [
                     {
                         name: 'id',
-                        type: 'int',
+                        type: 'uuid',
                         isPrimary: true,
                         isGenerated: true,
-                        generationStrategy: 'increment',
+                        generationStrategy: 'uuid',
                     },
                     {
                         name: 'username',
@@ -21,7 +21,6 @@ export class CreateUsersTable1760296278140 implements MigrationInterface {
                     {
                         name: 'email',
                         type: 'varchar',
-                        isUnique: true,
                     },
                     {
                         name: 'password',
@@ -34,6 +33,11 @@ export class CreateUsersTable1760296278140 implements MigrationInterface {
                     {
                         name: 'description',
                         type: 'text',
+                    },
+                    {
+                        name: 'deletedDate',
+                        type: 'timestamptz',
+                        isNullable: true,
                     },
                 ],
             }),

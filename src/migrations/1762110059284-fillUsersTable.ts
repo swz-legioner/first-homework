@@ -1,4 +1,4 @@
-import { User } from 'src/users/user.entity';
+import { User } from '../users/user.entity';
 import { MigrationInterface, QueryRunner } from 'typeorm';
 import { InsertResult } from 'typeorm/browser';
 
@@ -32,7 +32,7 @@ function randomEmail() {
 export class FillUsersTable1762110059284 implements MigrationInterface {
     public async up(queryRunner: QueryRunner): Promise<void> {
         const processing: Promise<InsertResult>[] = [];
-        const userRepository = queryRunner.connection.getRepository(User);
+        const userRepository = queryRunner.manager.getRepository(User);
 
         const salt = await bcrypt.genSalt();
 
@@ -62,6 +62,7 @@ export class FillUsersTable1762110059284 implements MigrationInterface {
             My email - ${user.email}.
             I am ${user.age} years old.
             I can tell you about myself that i'm ${randomString(50)}.`;
+
             processing.push(userRepository.insert(user));
         }
 

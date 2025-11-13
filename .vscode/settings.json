@@ -16,5 +16,6 @@
             "readOnly": false,
             "connectionTimeout": 30
         }
-    ]
+    ],
+    "vscodeTodo.enableWideView": false
 }

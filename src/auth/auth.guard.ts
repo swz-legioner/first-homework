@@ -8,16 +8,17 @@ import { Reflector } from '@nestjs/core';
 import { JwtService } from '@nestjs/jwt';
 import { Request } from 'express';
 
-import { IS_PUBLIC_KEY } from 'src/common/decorators/is-public';
+import { IS_PUBLIC_KEY } from '../common/decorators/is-public';
 
-import { JWT_SECRET } from 'src/const/jwt';
-import { extractUserPayload } from 'src/utils/extractUserPayload';
+import { extractUserPayload } from '../utils/extractUserPayload';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class AuthGuard implements CanActivate {
     constructor(
         private jwtService: JwtService,
         private reflector: Reflector,
+        private configService: ConfigService,
     ) {}
 
     async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -39,7 +40,7 @@ export class AuthGuard implements CanActivate {
             const maybePayload: unknown = await this.jwtService.verifyAsync(
                 token,
                 {
-                    secret: JWT_SECRET,
+                    secret: this.configService.get<string>('JWT_SECRET'),
                 },
             );
             const payload = extractUserPayload(maybePayload);

@@ -1,30 +1,28 @@
-import { Injectable } from '@nestjs/common';
+import {
+    BadRequestException,
+    Injectable,
+    InternalServerErrorException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 
 import bcrypt from 'bcrypt';
 
-import { SignInUserDto } from './dto/sign-in-user.dto';
 import { RefreshTokensDto } from './dto/refresh-tokens.dto';
+import { SignInUserDto } from './dto/sign-in-user.dto';
 import { SignUpUserDto } from './dto/sign-up-user.dto';
 import { TokensDto } from './dto/tokens.dto';
 
-import { UserNotFoundError } from 'src/errors/UserNotFound';
-import { InvalidTokenError } from './errors/invalid-token';
-import { InvalidTokenKindError } from './errors/invalid-token-kind';
-import { PasswordInvalidError } from './errors/password-invalid';
-import { UserAlreadyExistsError } from './errors/user-already-exists';
-import { UserNotCreatedError } from './errors/user-not-created';
-
-import { JWT_SECRET } from 'src/const/jwt';
-import { User } from 'src/users/user.entity';
-import { UsersService } from 'src/users/users.service';
-import { extractUserPayload } from 'src/utils/extractUserPayload';
+import { ConfigService } from '@nestjs/config';
+import { User } from '../users/user.entity';
+import { UsersService } from '../users/users.service';
+import { extractUserPayload } from '../utils/extractUserPayload';
 
 @Injectable()
 export class AuthService {
     constructor(
         private usersService: UsersService,
         private jwtService: JwtService,
+        private configService: ConfigService,
     ) {}
 
     private async createTokens<T extends object>(
@@ -47,20 +45,19 @@ export class AuthService {
     }
 
     async signIn(user: SignInUserDto): Promise<TokensDto> {
-        const foundUser = await this.usersService.findByName(
-            user.username,
+        const foundUser = await this.usersService.findOneStrict(
+            {
+                username: user.username,
+            },
             false,
         );
-        if (foundUser === null) {
-            throw new UserNotFoundError();
-        }
 
         const passwordCorrect = await bcrypt.compare(
             user.password,
             foundUser.password,
         );
         if (!passwordCorrect) {
-            throw new PasswordInvalidError();
+            throw new BadRequestException('Invalid password');
         }
 
         const payload = {
@@ -72,14 +69,20 @@ export class AuthService {
     }
 
     async signUp(user: SignUpUserDto) {
-        const sameEmail = await this.usersService.findByEmail(user.email);
+        const sameEmail = await this.usersService.findOne({
+            email: user.email,
+        });
         if (sameEmail) {
-            throw new UserAlreadyExistsError();
+            throw new BadRequestException(
+                'User with same email already exists',
+            );
         }
 
-        const sameName = await this.usersService.findByName(user.username);
+        const sameName = await this.usersService.findOne({
+            username: user.username,
+        });
         if (sameName) {
-            throw new UserAlreadyExistsError();
+            throw new BadRequestException('User with same name already exists');
         }
 
         const salt = await bcrypt.genSalt();
@@ -87,13 +90,13 @@ export class AuthService {
         let id: User['id'];
 
         try {
-            id = await this.usersService.createOne({
+            id = await this.usersService.insertOne({
                 ...user,
                 password: hash,
             });
         } catch (e) {
-            throw new UserNotCreatedError(
-                e instanceof Error ? e.message : JSON.stringify(e),
+            throw new InternalServerErrorException(
+                'Failed attempt to create user: ' + (e as Error).message,
             );
         }
 
@@ -105,22 +108,17 @@ export class AuthService {
         return this.createTokens(payload);
     }
 
-    async refreshTokens({ accessToken }: RefreshTokensDto) {
-        let maybePayload: unknown;
-        try {
-            maybePayload = await this.jwtService.verifyAsync(accessToken, {
-                secret: JWT_SECRET,
-            });
-        } catch (e) {
-            throw new InvalidTokenError((e as Error).message ?? e);
-        }
+    async refreshTokens({ refreshToken }: RefreshTokensDto) {
+        const maybePayload = (await this.jwtService.verifyAsync(refreshToken, {
+            secret: this.configService.get<string>('JWT_SECRET'),
+        })) as unknown;
 
         const payload = extractUserPayload(maybePayload);
         if (payload === null) {
-            throw new InvalidTokenError();
+            throw new BadRequestException('Invalid token payload');
         }
         if (payload.kind === 'access') {
-            throw new InvalidTokenKindError();
+            throw new BadRequestException('Invalid kind of token');
         }
 
         return this.createTokens({ name: payload?.name, id: payload?.id });

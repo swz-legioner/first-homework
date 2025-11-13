@@ -3,7 +3,7 @@ import { z } from 'zod';
 
 export const GetUserSchema = z
     .object({
-        id: z.number(),
+        id: z.uuidv7(),
         username: z.string().min(4).max(32),
         email: z.email(),
         age: z.number().min(1).max(130),
