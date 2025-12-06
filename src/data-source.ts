@@ -1,16 +1,24 @@
 import { DataSource } from 'typeorm';
-import { DATABASE_CONFIG } from './const/database-config';
+import { getAppConfig } from './config/app.config';
 import { CreateUsersTable1760296278140 } from './migrations/1760296278140-createUsersTable';
 import { FillUsersTable1762110059284 } from './migrations/1762110059284-fillUsersTable';
-import { AddDeletedDateToUsers1762157225612 } from './migrations/1762157225612-addDeletedDateToUsers';
 import { User } from './users/user.entity';
 
+const {
+    POSTGRES_DATABASE,
+    POSTGRES_HOST,
+    POSTGRES_PASSWORD,
+    POSTGRES_PORT,
+    POSTGRES_USER,
+} = getAppConfig();
+
 export const AppDataSource = new DataSource({
-    ...DATABASE_CONFIG,
-    migrations: [
-        CreateUsersTable1760296278140,
-        FillUsersTable1762110059284,
-        AddDeletedDateToUsers1762157225612,
-    ],
+    type: 'postgres',
+    database: POSTGRES_DATABASE,
+    host: POSTGRES_HOST,
+    port: POSTGRES_PORT,
+    username: POSTGRES_USER,
+    password: POSTGRES_PASSWORD,
+    migrations: [CreateUsersTable1760296278140, FillUsersTable1762110059284],
     entities: [User],
 });

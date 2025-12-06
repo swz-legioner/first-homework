@@ -1,5 +1,5 @@
 export type UserPayload = {
-    id: number;
+    id: string;
     name: string;
     iat: number;
     exp: number;
@@ -16,7 +16,8 @@ export function extractUserPayload(maybe: unknown): UserPayload | null {
     const isInt = (v: unknown) => isNum(v) && Number.isInteger(v as number);
 
     if (
-        isNum(id) &&
+        typeof id === 'string' &&
+        id.length > 0 &&
         typeof name === 'string' &&
         name.length > 0 &&
         isInt(iat) &&
@@ -26,7 +27,7 @@ export function extractUserPayload(maybe: unknown): UserPayload | null {
         (kind === 'access' || kind === 'refresh')
     ) {
         return {
-            id: id as number,
+            id,
             name,
             iat: iat as number,
             exp: exp as number,

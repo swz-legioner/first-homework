@@ -3,7 +3,7 @@ import { z } from 'zod';
 
 export const RefreshTokensSchema = z
     .object({
-        accessToken: z.string(),
+        refreshToken: z.string(),
     })
     .required();
 

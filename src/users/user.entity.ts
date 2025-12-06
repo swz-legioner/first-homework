@@ -7,8 +7,8 @@ import {
 
 @Entity('users')
 export class User {
-    @PrimaryGeneratedColumn()
-    id: number;
+    @PrimaryGeneratedColumn('uuid')
+    id: string;
 
     @Column({ length: 32 })
     username: string;
@@ -26,5 +26,5 @@ export class User {
     description: string;
 
     @DeleteDateColumn()
-    deletedDate: Date;
+    deletedDate?: Date;
 }
