@@ -58,10 +58,12 @@ export class FillUsersTable1762110059284 implements MigrationInterface {
                 description: '',
             };
 
-            user.description = `I'm a ${user.username}.
+            if (Math.random() > 0.3) {
+                user.description = `I'm a ${user.username}.
             My email - ${user.email}.
             I am ${user.age} years old.
             I can tell you about myself that i'm ${randomString(50)}.`;
+            }
 
             processing.push(userRepository.insert(user));
         }

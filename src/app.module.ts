@@ -7,6 +7,10 @@ import { AuthModule } from './auth/auth.module';
 import { User } from './users/user.entity';
 import { UsersModule } from './users/users.module';
 
+import { Avatar } from './users/avatars.entity';
+
+import { S3Module } from './providers/files/s3/s3.module';
+
 import appConfig from './config/app.config';
 
 @Module({
@@ -14,6 +18,10 @@ import appConfig from './config/app.config';
         ConfigModule.forRoot({
             isGlobal: true,
             load: [appConfig],
+            envFilePath:
+                process.env.NODE_ENV === 'production'
+                    ? ['.env']
+                    : [`.env.${process.env.NODE_ENV}.local`, '.env'],
         }),
         TypeOrmModule.forRootAsync({
             imports: [ConfigModule],
@@ -21,12 +29,13 @@ import appConfig from './config/app.config';
             useFactory: (config: ConfigType<typeof appConfig>) => {
                 return {
                     ...config.db,
-                    entities: [User],
+                    entities: [User, Avatar],
                 };
             },
         }),
         UsersModule,
         AuthModule,
+        S3Module,
     ],
     controllers: [],
     providers: [],
