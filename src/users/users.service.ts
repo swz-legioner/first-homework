@@ -12,6 +12,7 @@ import {
     Repository,
     SelectQueryBuilder,
 } from 'typeorm';
+import { Transactional } from 'typeorm-transactional';
 
 import { User } from './user.entity';
 
@@ -30,7 +31,6 @@ const PublicUserColumns: (keyof User)[] = [
     'email',
     'age',
     'description',
-    'avatars',
 ];
 
 @Injectable()
@@ -247,5 +247,40 @@ export class UsersService {
             .getRawMany();
 
         return users;
+    }
+
+    @Transactional()
+    async sendMoney(source: User['id'], target: User['id'], amount: number) {
+        const sourceUser = (await this.usersRepository.findOne({
+            where: {
+                id: source,
+            },
+        })) as User;
+
+        const sourceNewBalance = Number(sourceUser.balance) - amount;
+        sourceUser.balance = String(sourceNewBalance);
+
+        try {
+            await this.usersRepository.save(sourceUser);
+        } catch {
+            throw new InternalServerErrorException('Failed to withdraw funds');
+        }
+        const targetUser = await this.usersRepository.findOne({
+            where: {
+                id: target,
+            },
+        });
+        if (!targetUser) {
+            throw new BadRequestException('Target user not found');
+        }
+
+        const targetNewBalance = Number(targetUser.balance) + amount;
+        targetUser.balance = String(targetNewBalance);
+
+        await this.usersRepository.save(targetUser);
+    }
+
+    async getBalance(id: User['id']) {
+        return await this._findOne({ id }, { select: ['balance'] });
     }
 }

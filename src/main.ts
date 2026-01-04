@@ -1,11 +1,16 @@
+import 'reflect-metadata';
+
 import { ConfigService, ConfigType } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import 'reflect-metadata';
+
 import { AppModule } from './app.module';
 import appConfig from './config/app.config';
+import { initializeTransactionalContext } from 'typeorm-transactional';
 
 async function bootstrap() {
+    initializeTransactionalContext();
+
     const app = await NestFactory.create(AppModule, { cors: true });
     const configService = app.get(ConfigService);
     const { http } = configService.get('app') as ConfigType<typeof appConfig>;

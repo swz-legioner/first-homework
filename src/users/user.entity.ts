@@ -27,6 +27,9 @@ export class User {
     @Column('text')
     description: string;
 
+    @Column('numeric')
+    balance: string;
+
     @OneToMany(() => Avatar, (avatar) => avatar.user)
     avatars: Avatar[];
 

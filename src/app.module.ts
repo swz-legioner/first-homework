@@ -1,6 +1,9 @@
+import KeyvRedis, { Keyv } from '@keyv/redis';
+import { CacheModule } from '@nestjs/cache-manager';
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigType } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { addTransactionalDataSource } from 'typeorm-transactional';
 
 import { AuthModule } from './auth/auth.module';
 
@@ -12,8 +15,7 @@ import { Avatar } from './users/avatars.entity';
 import { S3Module } from './providers/files/s3/s3.module';
 
 import appConfig from './config/app.config';
-import { CacheModule } from '@nestjs/cache-manager';
-import KeyvRedis, { Keyv } from '@keyv/redis';
+import { DataSource } from 'typeorm';
 
 @Module({
     imports: [
@@ -34,7 +36,16 @@ import KeyvRedis, { Keyv } from '@keyv/redis';
                     entities: [User, Avatar],
                 };
             },
+            // eslint-disable-next-line @typescript-eslint/require-await
+            async dataSourceFactory(options) {
+                if (!options) {
+                    throw new Error('Invalid options passed');
+                }
+
+                return addTransactionalDataSource(new DataSource(options));
+            },
         }),
+
         CacheModule.registerAsync({
             isGlobal: true,
             imports: [ConfigModule],

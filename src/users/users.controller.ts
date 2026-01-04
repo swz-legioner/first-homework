@@ -34,6 +34,7 @@ import {
     GetMostActiveUsersQueryDto,
     GetMostActiveUsersQuerySchema,
 } from './dto/get-most-active-users';
+import { SendMoneyDto, SendMoneySchema } from './dto/send-money.dto';
 
 import { FileValidationPipe } from './pipes/file-size-validation.pipe';
 
@@ -45,6 +46,8 @@ import { GetSelfDocs } from './docs/get-self.docs';
 import { GetUserDocs } from './docs/get-user.docs';
 import { GetUsersDocs } from './docs/get-users.docs';
 import { UpdateUserDocs } from './docs/update-users.docs';
+import { GetBalanceDocs } from './docs/get-balance.docs';
+import { SendMoneyDocs } from './docs/send-money.docs';
 
 @Controller('users')
 @ApiBearerAuth('Authorization')
@@ -101,6 +104,12 @@ export class UsersController {
         return await this.usersService.findOneStrict({ id: user.id });
     }
 
+    @Get('balance')
+    @GetBalanceDocs()
+    async getBalance(@User() user: UserPayload) {
+        return this.usersService.getBalance(user.id);
+    }
+
     @Get(':id')
     @GetUserDocs()
     @UseInterceptors(CacheInterceptor)
@@ -121,5 +130,16 @@ export class UsersController {
     @DeleteUserDocs()
     async deleteUser(@User() user: UserPayload) {
         return await this.usersService.deleteOne(user.id);
+    }
+
+    @Post('send-money')
+    @SendMoneyDocs()
+    async sendMoney(
+        @User() user: UserPayload,
+        @Body(new ZodValidationPipe(SendMoneySchema))
+        body: SendMoneyDto,
+    ) {
+        const { target, amount } = body;
+        return await this.usersService.sendMoney(user.id, target, amount);
     }
 }
