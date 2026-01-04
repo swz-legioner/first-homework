@@ -13,6 +13,8 @@ export const appConfigSchema = z.object({
     MINIO_SECRET_KEY: z.string().min(1),
     MINIO_HOST: z.string().min(1).default('127.0.0.1'),
     MINIO_API_PORT: z.string().min(1).default('9000'),
+    REDIS_PORT: z.string().min(1).default('6379'),
+    REDIS_PASSWORD: z.string().min(1).default(''),
 });
 
 export type AppConfigEnv = z.infer<typeof appConfigSchema>;
@@ -44,6 +46,10 @@ export default registerAs('app', () => {
             secret: env.MINIO_SECRET_KEY,
             host: env.MINIO_HOST,
             port: env.MINIO_API_PORT,
+        },
+        redis: {
+            port: env.REDIS_PORT,
+            password: env.REDIS_PASSWORD,
         },
     };
 });

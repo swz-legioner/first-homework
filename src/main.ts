@@ -45,4 +45,11 @@ async function bootstrap() {
 
     await app.listen(http.port);
 }
-bootstrap();
+
+bootstrap()
+    .then(() => {
+        console.log('Server started');
+    })
+    .catch((e) => {
+        console.log('Server failed with error: ', e);
+    });

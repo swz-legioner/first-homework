@@ -10,7 +10,7 @@ import {
     UploadedFile,
     UseInterceptors,
 } from '@nestjs/common';
-
+import { CacheInterceptor } from '@nestjs/cache-manager';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiBearerAuth } from '@nestjs/swagger';
 
@@ -87,6 +87,7 @@ export class UsersController {
 
     @Get()
     @GetUsersDocs()
+    @UseInterceptors(CacheInterceptor)
     async getUsers(
         @Query(new ZodValidationPipe(GetUsersQuerySchema))
         query: GetUsersQueryDto,
@@ -102,6 +103,7 @@ export class UsersController {
 
     @Get(':id')
     @GetUserDocs()
+    @UseInterceptors(CacheInterceptor)
     async getUser(@Param('id') id: string): Promise<GetUserDto> {
         return await this.usersService.findOneStrict({ id });
     }
