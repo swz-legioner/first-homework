@@ -5,7 +5,7 @@ export const GetAvatarsSchema = z.array(
     z
         .object({
             name: z.string(),
-            created: z.date(),
+            created: z.iso.date(),
         })
         .required(),
 );

@@ -2,6 +2,7 @@ import {
     BadRequestException,
     Injectable,
     InternalServerErrorException,
+    Logger,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 
@@ -19,6 +20,8 @@ import { extractUserPayload } from '../utils/extractUserPayload';
 
 @Injectable()
 export class AuthService {
+    private readonly logger = new Logger(AuthService.name);
+
     constructor(
         private usersService: UsersService,
         private jwtService: JwtService,
@@ -45,6 +48,7 @@ export class AuthService {
     }
 
     async signIn(user: SignInUserDto): Promise<TokensDto> {
+        this.logger.log(`Sign-in attempt username=${user.username}`);
         const foundUser = await this.usersService.findOneStrict(
             {
                 username: user.username,
@@ -57,7 +61,10 @@ export class AuthService {
             foundUser.password,
         );
         if (!passwordCorrect) {
-            throw new BadRequestException('Invalid password');
+            this.logger.warn(
+                `Sign-in failed username=${user.username}: invalid credentials`,
+            );
+            throw new BadRequestException('Invalid credentials');
         }
 
         const payload = {
@@ -65,24 +72,33 @@ export class AuthService {
             name: foundUser.username,
         };
 
+        this.logger.log(`Sign-in success userId=${foundUser.id}`);
+
         return this.createTokens(payload);
     }
 
     async signUp(user: SignUpUserDto) {
+        this.logger.log(
+            `Sign-up attempt username=${user.username} email=${user.email}`,
+        );
         const sameEmail = await this.usersService.findOne({
             email: user.email,
         });
         if (sameEmail) {
-            throw new BadRequestException(
-                'User with same email already exists',
+            this.logger.warn(
+                `Sign-up failed username=${user.username} email=${user.email}: email already registered`,
             );
+            throw new BadRequestException('Invalid credentials');
         }
 
         const sameName = await this.usersService.findOne({
             username: user.username,
         });
         if (sameName) {
-            throw new BadRequestException('User with same name already exists');
+            this.logger.warn(
+                `Sign-up failed username=${user.username}: username already registered`,
+            );
+            throw new BadRequestException('Invalid credentials');
         }
 
         const salt = await bcrypt.genSalt();
@@ -95,8 +111,12 @@ export class AuthService {
                 password: hash,
             });
         } catch (e) {
+            this.logger.error(
+                `Sign-up failed username=${user.username} email=${user.email}: ` +
+                    (e as Error).message,
+            );
             throw new InternalServerErrorException(
-                'Failed attempt to create user: ' + (e as Error).message,
+                'Failed attempt to create user',
             );
         }
 
@@ -105,21 +125,32 @@ export class AuthService {
             name: user.username,
         };
 
+        this.logger.log(`Sign-up success userId=${id}`);
+
         return this.createTokens(payload);
     }
 
     async refreshTokens({ refreshToken }: RefreshTokensDto) {
+        this.logger.log('Token refresh attempt');
         const maybePayload = (await this.jwtService.verifyAsync(refreshToken, {
             secret: this.configService.get<string>('JWT_SECRET'),
         })) as unknown;
 
         const payload = extractUserPayload(maybePayload);
         if (payload === null) {
+            this.logger.warn('Token refresh failed: invalid token payload');
             throw new BadRequestException('Invalid token payload');
         }
         if (payload.kind === 'access') {
+            this.logger.warn(
+                `Token refresh failed userId=${payload.id}: invalid token kind`,
+            );
             throw new BadRequestException('Invalid kind of token');
         }
+
+        this.logger.log(
+            `Token refresh success userId=${payload.id} username=${payload.name}`,
+        );
 
         return this.createTokens({ name: payload?.name, id: payload?.id });
     }

@@ -25,6 +25,7 @@
     "dependencies": {
         "@aws-sdk/client-s3": "^3.948.0",
         "@keyv/redis": "^5.1.5",
+        "@nestjs/bullmq": "^11.0.4",
         "@nestjs/cache-manager": "^3.0.1",
         "@nestjs/common": "^11.0.1",
         "@nestjs/config": "^4.0.2",
@@ -36,6 +37,7 @@
         "@swc/cli": "^0.7.8",
         "@swc/core": "^1.13.5",
         "bcrypt": "^6.0.0",
+        "bullmq": "^5.66.4",
         "cache-manager": "^7.2.7",
         "class-validator": "^0.14.3",
         "cross-env": "^10.1.0",

@@ -2,6 +2,7 @@ import {
     BadRequestException,
     Injectable,
     InternalServerErrorException,
+    Logger,
     NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -35,6 +36,8 @@ const PublicUserColumns: (keyof User)[] = [
 
 @Injectable()
 export class UsersService {
+    private readonly logger = new Logger(UsersService.name);
+
     private storageAvatarsFolder = 'avatars';
 
     constructor(
@@ -55,7 +58,11 @@ export class UsersService {
                 ...options,
             });
         } catch (e) {
-            console.error(e);
+            this.logger.error(
+                `Find user failed criteria=${JSON.stringify(user)}: ${
+                    e instanceof Error ? e.message : e
+                }`,
+            );
             return null;
         }
     }
@@ -74,27 +81,38 @@ export class UsersService {
     async findOneStrict(user: Partial<User>, onlyPublic: boolean = true) {
         const found = await this.findOne(user, onlyPublic);
         if (!found) {
+            this.logger.warn(`User not found criteria=${JSON.stringify(user)}`);
             throw new NotFoundException(`User not found`);
         }
         return found;
     }
 
     async insertOne(data: SignUpUserDto): Promise<User['id']> {
+        this.logger.log(
+            `Insert user record attempt username=${data.username} email=${data.email}`,
+        );
         const { identifiers } = await this.usersRepository.insert(data);
-        return identifiers[0].id as User['id'];
+        const id = identifiers[0].id as User['id'];
+        this.logger.log(`Insert user record success userId=${id}`);
+        return id;
     }
 
     async updateOne(id: User['id'], user: Partial<User>) {
+        this.logger.log(`Update user record attempt userId=${id}`);
         await this.usersRepository.update({ id }, user);
-        return;
+        this.logger.log(`Update user record success userId=${id}`);
     }
 
     async deleteOne(id: User['id']) {
+        this.logger.log(`Delete user record attempt userId=${id}`);
         await this.usersRepository.softDelete(id);
-        return;
+        this.logger.log(`Delete user record success userId=${id}`);
     }
 
     async findAll(filter: string = '', page: number = 1) {
+        this.logger.log(
+            `List users attempt filter=${filter || 'none'} page=${page}`,
+        );
         const options: FindManyOptions<User> = {
             select: PublicUserColumns,
         };
@@ -109,6 +127,9 @@ export class UsersService {
             ...options,
         });
         if (usersCount === 0) {
+            this.logger.log(
+                `List users success filter=${filter || 'none'} page=${page} count=0`,
+            );
             return {
                 users: [],
                 maxPage: 0,
@@ -118,10 +139,18 @@ export class UsersService {
         const maxPage = Math.ceil(usersCount / USERS_PAGE_SIZE);
 
         if (page <= 0 || page > maxPage) {
+            this.logger.warn(
+                `List users failed filter=${filter || 'none'} page=${page}: invalid page`,
+            );
+
             throw new BadRequestException(
                 `The page should be in the range from 1 to ${maxPage}`,
             );
         }
+
+        this.logger.log(
+            `List users success filter=${filter || 'none'} page=${page} count=${usersCount}`,
+        );
 
         return {
             users: await this.usersRepository.find({
@@ -134,20 +163,33 @@ export class UsersService {
     }
 
     async getAvatars(id: User['id']) {
+        this.logger.log(`Get avatars attempt userId=${id}`);
+
         const avatars = await this.avatarsRepository.find({
             where: { user: { id } },
             relations: { user: true },
         });
 
+        this.logger.log(
+            `Get avatars success userId=${id} count=${avatars.length}`,
+        );
+
         return avatars.map((avatar) => ({
             name: avatar.filename,
-            created: avatar.createdDate,
+            created: avatar.createdDate.toISOString(),
         }));
     }
 
     async uploadAvatar(id: User['id'], file: IUploadedMulterFile) {
+        this.logger.log(
+            `Upload avatar attempt userId=${id} filename=${file.originalname}`,
+        );
+
         const user = await this._findOne({ id });
         if (user === null) {
+            this.logger.warn(
+                `Upload avatar skipped userId=${id}: user not found`,
+            );
             // Может произойти, если успели удалить юзера в окно действия accessToken
             // Такому пользователю не даем нормальные ответы
             return;
@@ -159,10 +201,16 @@ export class UsersService {
         });
 
         if (count === 5) {
-            throw new BadRequestException('');
+            this.logger.warn(
+                `Upload avatar failed userId=${id}: avatar limit reached`,
+            );
+            throw new BadRequestException('TODO: сюда тоже ошибке');
         }
 
         if (avatars.map((e) => e.filename).includes(file.originalname)) {
+            this.logger.warn(
+                `Upload avatar skipped userId=${id} filename=${file.originalname}: duplicate filename`,
+            );
             // Если такой уже есть - игнорируем
             return;
         }
@@ -175,6 +223,9 @@ export class UsersService {
             });
         } catch (e) {
             const message = (e as Error).message;
+            this.logger.error(
+                `Upload avatar failed userId=${id} filename=${file.originalname}: ${message}`,
+            );
             throw new InternalServerErrorException(message);
         }
 
@@ -189,18 +240,29 @@ export class UsersService {
             });
 
             const message = (e as Error).message;
+            this.logger.error(
+                `Insert avatar record failed userId=${id} filename=${file.originalname}: ${message}`,
+            );
             throw new InternalServerErrorException(message);
         }
+
+        this.logger.log(
+            `Upload avatar success userId=${id} filename=${file.originalname}`,
+        );
 
         return;
     }
 
     async removeAvatar(id: User['id'], name: Avatar['filename']) {
+        this.logger.log(`Remove avatar attempt userId=${id} filename=${name}`);
         const avatar = await this.avatarsRepository.findOne({
             where: { user: { id }, filename: name },
             relations: { user: true },
         });
         if (!avatar) {
+            this.logger.warn(
+                `Remove avatar skipped userId=${id} filename=${name}: not found`,
+            );
             return;
         }
 
@@ -209,9 +271,13 @@ export class UsersService {
         await this.fileService.removeFile({
             path: `${this.storageAvatarsFolder}/${name}`,
         });
+        this.logger.log(`Remove avatar success userId=${id} filename=${name}`);
     }
 
     async findMostActive(from: User['age'], to: User['age']) {
+        this.logger.log(
+            `Find most active users attempt ageFrom=${from} ageTo=${to}`,
+        );
         const users: Array<
             Pick<User, 'username' | 'email' | 'age' | 'description'> & {
                 lastAvatar: Avatar['filename'];
@@ -246,11 +312,18 @@ export class UsersService {
             .having('COUNT(a.id) > 2')
             .getRawMany();
 
+        this.logger.log(
+            `Find most active users success ageFrom=${from} ageTo=${to} count=${users.length}`,
+        );
+
         return users;
     }
 
     @Transactional()
     async sendMoney(source: User['id'], target: User['id'], amount: number) {
+        this.logger.log(
+            `Send money attempt sourceUserId=${source} targetUserId=${target} amount=${amount}`,
+        );
         const sourceUser = (await this.usersRepository.findOne({
             where: {
                 id: source,
@@ -262,7 +335,12 @@ export class UsersService {
 
         try {
             await this.usersRepository.save(sourceUser);
-        } catch {
+        } catch (e) {
+            this.logger.error(
+                `Send money failed sourceUserId=${source} targetUserId=${target}: ${
+                    e instanceof Error ? e.message : e
+                }`,
+            );
             throw new InternalServerErrorException('Failed to withdraw funds');
         }
         const targetUser = await this.usersRepository.findOne({
@@ -271,6 +349,9 @@ export class UsersService {
             },
         });
         if (!targetUser) {
+            this.logger.warn(
+                `Send money failed sourceUserId=${source} targetUserId=${target}: target user not found`,
+            );
             throw new BadRequestException('Target user not found');
         }
 
@@ -278,9 +359,13 @@ export class UsersService {
         targetUser.balance = String(targetNewBalance);
 
         await this.usersRepository.save(targetUser);
+        this.logger.log(
+            `Send money success sourceUserId=${source} targetUserId=${target} amount=${amount}`,
+        );
     }
 
     async getBalance(id: User['id']) {
+        this.logger.log(`Get balance attempt userId=${id}`);
         return await this._findOne({ id }, { select: ['balance'] });
     }
 }

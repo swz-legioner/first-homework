@@ -3,6 +3,7 @@ import { CacheModule } from '@nestjs/cache-manager';
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigType } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { BullModule } from '@nestjs/bullmq';
 import { addTransactionalDataSource } from 'typeorm-transactional';
 
 import { AuthModule } from './auth/auth.module';
@@ -16,6 +17,7 @@ import { S3Module } from './providers/files/s3/s3.module';
 
 import appConfig from './config/app.config';
 import { DataSource } from 'typeorm';
+import { BalanceResetModule } from './balance-reset/balance-reset.module';
 
 @Module({
     imports: [
@@ -45,7 +47,6 @@ import { DataSource } from 'typeorm';
                 return addTransactionalDataSource(new DataSource(options));
             },
         }),
-
         CacheModule.registerAsync({
             isGlobal: true,
             imports: [ConfigModule],
@@ -63,9 +64,23 @@ import { DataSource } from 'typeorm';
                 };
             },
         }),
+        BullModule.forRootAsync({
+            imports: [ConfigModule],
+            inject: [appConfig.KEY],
+            useFactory: (config: ConfigType<typeof appConfig>) => {
+                return {
+                    connection: {
+                        host: 'localhost',
+                        port: Number(config.redis.port),
+                        password: config.redis.password,
+                    },
+                };
+            },
+        }),
         UsersModule,
         AuthModule,
         S3Module,
+        BalanceResetModule,
     ],
     controllers: [],
     providers: [],

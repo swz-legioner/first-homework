@@ -44,6 +44,17 @@ export class FillUsersTable1762110059284 implements MigrationInterface {
 
         await writeFile(credentialsFile, 'user, password');
 
+        processing.push(
+            // Только этот юзер имеет право запрашивать обнуление балансов через API
+            userRepository.insert({
+                username: 'admin',
+                password: await bcrypt.hash('homework-admin', salt),
+                email: 'admin@admin.com',
+                age: 100,
+                description: 'i am admin',
+            }),
+        );
+
         for (let i = 0; i < TEST_USERS_COUNT; i++) {
             const username = randomString(randomInt(4, 32));
             const password = randomString(randomInt(8, 32));

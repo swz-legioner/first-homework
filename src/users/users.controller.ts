@@ -1,3 +1,4 @@
+import { CacheInterceptor } from '@nestjs/cache-manager';
 import {
     Body,
     Controller,
@@ -10,7 +11,6 @@ import {
     UploadedFile,
     UseInterceptors,
 } from '@nestjs/common';
-import { CacheInterceptor } from '@nestjs/cache-manager';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiBearerAuth } from '@nestjs/swagger';
 
@@ -31,9 +31,10 @@ import {
 } from './dto/delete-avatar.dto';
 import { GetAvatarsDto } from './dto/get-avatars.dto';
 import {
+    GetMostActiveUsersDto,
     GetMostActiveUsersQueryDto,
     GetMostActiveUsersQuerySchema,
-} from './dto/get-most-active-users';
+} from './dto/get-most-active-users.dto';
 import { SendMoneyDto, SendMoneySchema } from './dto/send-money.dto';
 
 import { FileValidationPipe } from './pipes/file-size-validation.pipe';
@@ -42,12 +43,16 @@ import { ZodValidationPipe } from '../common/pipes/zod-validation.pipe';
 import { type UserPayload } from '../utils/extractUserPayload';
 
 import { DeleteUserDocs } from './docs/delete-user.docs';
+import { GetBalanceDocs } from './docs/get-balance.docs';
+import { GetMostActiveUsersDocs } from './docs/get-most-active-users.docs';
 import { GetSelfDocs } from './docs/get-self.docs';
 import { GetUserDocs } from './docs/get-user.docs';
 import { GetUsersDocs } from './docs/get-users.docs';
-import { UpdateUserDocs } from './docs/update-users.docs';
-import { GetBalanceDocs } from './docs/get-balance.docs';
 import { SendMoneyDocs } from './docs/send-money.docs';
+import { UpdateUserDocs } from './docs/update-user.docs';
+import { GetAvatarDocs } from './docs/get-avatar.docs';
+import { AddAvatarDocs } from './docs/add-avatar.docs';
+import { DeleteAvatarDocs } from './docs/delete-avatar.docs';
 
 @Controller('users')
 @ApiBearerAuth('Authorization')
@@ -55,11 +60,13 @@ export class UsersController {
     constructor(private usersService: UsersService) {}
 
     @Get('avatar')
+    @GetAvatarDocs()
     async getAvatars(@User() user: UserPayload): Promise<GetAvatarsDto> {
         return await this.usersService.getAvatars(user.id);
     }
 
     @Post('avatar')
+    @AddAvatarDocs()
     @UseInterceptors(FileInterceptor('avatar'))
     async addAvatar(
         @User() user: UserPayload,
@@ -69,6 +76,7 @@ export class UsersController {
     }
 
     @Delete('avatar')
+    @DeleteAvatarDocs()
     async removeAvatar(
         @User() user: UserPayload,
         @Query(new ZodValidationPipe(RemoveAvatarQuerySchema))
@@ -78,10 +86,11 @@ export class UsersController {
     }
 
     @Get('most-active')
+    @GetMostActiveUsersDocs()
     async getMostActiveUsers(
         @Query(new ZodValidationPipe(GetMostActiveUsersQuerySchema))
         query: GetMostActiveUsersQueryDto,
-    ) {
+    ): Promise<GetMostActiveUsersDto> {
         return await this.usersService.findMostActive(
             query.ageFrom,
             query.ageTo,

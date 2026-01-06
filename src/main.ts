@@ -3,10 +3,12 @@ import 'reflect-metadata';
 import { ConfigService, ConfigType } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { Queue } from 'bullmq';
+import { initializeTransactionalContext } from 'typeorm-transactional';
+import { getQueueToken } from '@nestjs/bullmq';
 
 import { AppModule } from './app.module';
 import appConfig from './config/app.config';
-import { initializeTransactionalContext } from 'typeorm-transactional';
 
 async function bootstrap() {
     initializeTransactionalContext();
@@ -48,6 +50,18 @@ async function bootstrap() {
         jsonDocumentUrl: 'api/json',
     });
 
+    await app.init();
+    const queue = app.get<Queue>(getQueueToken('balance'));
+
+    await queue.upsertJobScheduler(
+        'balance-reset-10m',
+        { every: 10 * 60 * 1000 },
+        {
+            name: 'balance-reset',
+            data: {},
+            opts: { removeOnComplete: true, removeOnFail: 1000 },
+        },
+    );
     await app.listen(http.port);
 }
 
