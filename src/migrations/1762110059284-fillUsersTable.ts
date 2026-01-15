@@ -1,10 +1,10 @@
-import { User } from '../users/user.entity';
-import { MigrationInterface, QueryRunner } from 'typeorm';
-import { InsertResult } from 'typeorm/browser';
-
 import bcrypt from 'bcrypt';
 import { appendFile, writeFile } from 'fs/promises';
 import path from 'path';
+import { MigrationInterface, QueryRunner } from 'typeorm';
+import { InsertResult } from 'typeorm/browser';
+
+import { User } from '../users/user.entity';
 
 const TEST_USERS_COUNT = 130;
 
@@ -44,16 +44,21 @@ export class FillUsersTable1762110059284 implements MigrationInterface {
 
         await writeFile(credentialsFile, 'user, password');
 
-        processing.push(
-            // Только этот юзер имеет право запрашивать обнуление балансов через API
-            userRepository.insert({
-                username: 'admin',
-                password: await bcrypt.hash('homework-admin', salt),
-                email: 'admin@admin.com',
-                age: 100,
-                description: 'i am admin',
-            }),
-        );
+        if (typeof process.env.ADMIN_PASSWORD === 'string') {
+            processing.push(
+                // Только этот юзер имеет право запрашивать обнуление балансов через API
+                userRepository.insert({
+                    username: 'admin',
+                    password: await bcrypt.hash(
+                        process.env.ADMIN_PASSWORD,
+                        salt,
+                    ),
+                    email: 'admin@admin.com',
+                    age: 100,
+                    description: 'i am admin',
+                }),
+            );
+        }
 
         for (let i = 0; i < TEST_USERS_COUNT; i++) {
             const username = randomString(randomInt(4, 32));

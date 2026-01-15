@@ -25,6 +25,7 @@ import { USERS_PAGE_SIZE } from './const/users-page-size';
 
 import { IFileService } from 'src/providers/files/files.adapter';
 import { IUploadedMulterFile } from 'src/providers/files/s3/interfaces/upload-file.interface';
+import { MAX_AVATAR_COUNT } from './const/max-avatar-count';
 
 const PublicUserColumns: (keyof User)[] = [
     'id',
@@ -185,26 +186,16 @@ export class UsersService {
             `Upload avatar attempt userId=${id} filename=${file.originalname}`,
         );
 
-        const user = await this._findOne({ id });
-        if (user === null) {
-            this.logger.warn(
-                `Upload avatar skipped userId=${id}: user not found`,
-            );
-            // Может произойти, если успели удалить юзера в окно действия accessToken
-            // Такому пользователю не даем нормальные ответы
-            return;
-        }
-
         const [avatars, count] = await this.avatarsRepository.findAndCount({
             where: { user: { id } },
             relations: { user: true },
         });
 
-        if (count === 5) {
+        if (count === MAX_AVATAR_COUNT) {
             this.logger.warn(
                 `Upload avatar failed userId=${id}: avatar limit reached`,
             );
-            throw new BadRequestException('TODO: сюда тоже ошибке');
+            throw new BadRequestException('Avatar limit reached');
         }
 
         if (avatars.map((e) => e.filename).includes(file.originalname)) {
@@ -230,8 +221,10 @@ export class UsersService {
         }
 
         try {
+            const user = await this._findOne({ id });
+
             await this.avatarsRepository.insert({
-                user,
+                user: user!,
                 filename: file.originalname,
             });
         } catch (e) {

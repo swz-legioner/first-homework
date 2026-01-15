@@ -15,6 +15,7 @@ export const appConfigSchema = z.object({
     MINIO_API_PORT: z.string().min(1).default('9000'),
     REDIS_PORT: z.string().min(1).default('6379'),
     REDIS_PASSWORD: z.string().min(1).default(''),
+    ADMIN_PASSWORD: z.string().min(1),
 });
 
 export type AppConfigEnv = z.infer<typeof appConfigSchema>;
