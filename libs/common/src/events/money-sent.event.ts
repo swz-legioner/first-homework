@@ -16,4 +16,4 @@ export class MoneySentEvent {
     }
 }
 
-export const MoneySentEventName = 'money_sent';
+export const MoneySentEventName = 'money_sent' as const;

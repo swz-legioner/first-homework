@@ -18,6 +18,9 @@ export const appConfigSchema = z.object({
     KAFKA_PORT_1: z.string().min(1).default(''),
     KAFKA_PORT_2: z.string().min(1).default(''),
     ADMIN_PASSWORD: z.string().min(1),
+    MONGODB_PORT: z.string().min(1).default('27017'),
+    MONGODB_USER: z.string(),
+    MONGODB_PASSWORD: z.string(),
 });
 
 export type AppConfigEnv = z.infer<typeof appConfigSchema>;
@@ -60,6 +63,11 @@ export function getConfig(env?: AppConfigEnv) {
         kafka: {
             first_port: env.KAFKA_PORT_1,
             second_port: env.KAFKA_PORT_2,
+        },
+        mongo: {
+            port: env.MONGODB_PORT,
+            user: env.MONGODB_USER,
+            password: env.MONGODB_PASSWORD,
         },
     };
 }

@@ -1,4 +1,5 @@
 import { Logger } from '@nestjs/common';
+import { InjectModel } from '@nestjs/mongoose';
 import {
     OnGatewayConnection,
     OnGatewayDisconnect,
@@ -7,8 +8,12 @@ import {
     WebSocketGateway,
     WebSocketServer,
 } from '@nestjs/websockets';
+import { Model } from 'mongoose';
 import { DefaultEventsMap, Server, Socket } from 'socket.io';
+
 import { AuthService } from '../auth/auth.service';
+import { Event } from '../schemas/event-schema';
+import { MoneySentEventName } from '@app/common';
 
 @WebSocketGateway()
 export class NotificationsGateway
@@ -17,7 +22,10 @@ export class NotificationsGateway
     private readonly logger = new Logger(NotificationsGateway.name);
     @WebSocketServer() io: Server;
 
-    constructor(private authService: AuthService) {}
+    constructor(
+        private authService: AuthService,
+        @InjectModel(Event.name) private eventModel: Model<Event>,
+    ) {}
 
     afterInit() {
         this.logger.log('NotificationsGateway Initialized');
@@ -69,12 +77,38 @@ export class NotificationsGateway
         };
     }
 
-    sendNotification(
-        channel: 'notification' | 'message',
-        target: string,
-        message: string,
+    sendNotification(to: string, message: string) {
+        this.logger.log(`Sending to user=${to} message=${message}`);
+        return this.io.to(to).emit('notification', message);
+    }
+
+    async sendBalanceNotification(
+        from: string,
+        to: string,
+        amount: number,
+        timestamp: number,
     ) {
-        this.logger.log(`Sending to user=${target} message=${message}`);
-        return this.io.to(target).emit(channel, message);
+        const data = {
+            event: MoneySentEventName,
+            from,
+            to,
+            amount,
+            timestamp,
+        };
+
+        this.logger.log(
+            `Sending to user=${to} message=${JSON.stringify(data)}`,
+        );
+
+        const createdEvent = new this.eventModel({
+            from,
+            to,
+            amount,
+            timestamp,
+        });
+
+        await createdEvent.save();
+
+        return this.io.to(to).emit('notification', data);
     }
 }

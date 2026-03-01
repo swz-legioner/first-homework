@@ -19,18 +19,18 @@ export class NotificationController {
         body: SendNotificationDto,
     ) {
         return this.notificationGateway.sendNotification(
-            'message',
             body.userId,
             body.message,
         );
     }
 
     @EventPattern(MoneySentEventName)
-    handleMoneySent(data: MoneySentEvent) {
-        this.notificationGateway.sendNotification(
-            'notification',
+    async handleMoneySent(data: MoneySentEvent) {
+        await this.notificationGateway.sendBalanceNotification(
+            data.from,
             data.to,
-            `User ${data.from} sent you ${data.amount} money`,
+            data.amount,
+            data.timestamp,
         );
     }
 }
