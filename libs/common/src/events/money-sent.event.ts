@@ -3,6 +3,7 @@ export class MoneySentEvent {
         public from: string,
         public to: string,
         public amount: number,
+        public timestamp: number,
     ) {}
 
     toString() {
@@ -10,6 +11,7 @@ export class MoneySentEvent {
             from: this.from,
             to: this.to,
             amount: this.amount,
+            timestamp: this.timestamp,
         });
     }
 }

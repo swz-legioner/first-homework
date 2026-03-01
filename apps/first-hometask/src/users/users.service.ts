@@ -365,7 +365,7 @@ export class UsersService {
 
         this.notificationClient.emit(
             MoneySentEventName,
-            new MoneySentEvent(source, target, amount),
+            new MoneySentEvent(source, target, amount, Date.now()),
         );
 
         this.logger.log(
