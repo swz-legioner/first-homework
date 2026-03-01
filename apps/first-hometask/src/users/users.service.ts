@@ -23,8 +23,8 @@ import { SignUpUserDto } from '../auth/dto/sign-up-user.dto';
 
 import { USERS_PAGE_SIZE } from './const/users-page-size';
 
-import { IFileService } from 'src/providers/files/files.adapter';
-import { IUploadedMulterFile } from 'src/providers/files/s3/interfaces/upload-file.interface';
+import { IFileService } from '../providers/files/files.adapter';
+import { IUploadedMulterFile } from '../providers/files/s3/interfaces/upload-file.interface';
 import { MAX_AVATAR_COUNT } from './const/max-avatar-count';
 
 const PublicUserColumns: (keyof User)[] = [

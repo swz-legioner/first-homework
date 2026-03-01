@@ -7,7 +7,7 @@ import { UsersService } from './users.service';
 
 import { Avatar } from './avatars.entity';
 
-import { FilesModule } from 'src/providers/files/files.module';
+import { FilesModule } from '../providers/files/files.module';
 
 @Module({
     imports: [TypeOrmModule.forFeature([User, Avatar]), FilesModule],

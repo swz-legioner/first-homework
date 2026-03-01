@@ -3,7 +3,7 @@ import { Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Not, Repository } from 'typeorm';
 
-import { User } from 'src/users/user.entity';
+import { User } from '../users/user.entity';
 
 @Processor('balance')
 export class BalanceConsumer extends WorkerHost {

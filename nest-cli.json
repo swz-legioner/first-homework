@@ -1,9 +1,33 @@
 {
     "$schema": "https://json.schemastore.org/nest-cli",
     "collection": "@nestjs/schematics",
-    "sourceRoot": "src",
+    "sourceRoot": "apps/first-hometask/src",
     "compilerOptions": {
         "deleteOutDir": true,
-        "plugins": ["@nestjs/swagger/plugin"]
+        "plugins": ["@nestjs/swagger/plugin"],
+        "webpack": true,
+        "tsConfigPath": "apps/first-hometask/tsconfig.app.json"
+    },
+    "monorepo": true,
+    "root": "apps/first-hometask",
+    "projects": {
+        "first-hometask": {
+            "type": "application",
+            "root": "apps/first-hometask",
+            "entryFile": "main",
+            "sourceRoot": "apps/first-hometask/src",
+            "compilerOptions": {
+                "tsConfigPath": "apps/first-hometask/tsconfig.app.json"
+            }
+        },
+        "notification-service": {
+            "type": "application",
+            "root": "apps/notification-service",
+            "entryFile": "main",
+            "sourceRoot": "apps/notification-service/src",
+            "compilerOptions": {
+                "tsConfigPath": "apps/notification-service/tsconfig.app.json"
+            }
+        }
     }
 }
