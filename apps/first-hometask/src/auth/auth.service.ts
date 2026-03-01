@@ -16,7 +16,7 @@ import { TokensDto } from './dto/tokens.dto';
 import { ConfigService } from '@nestjs/config';
 import { User } from '../users/user.entity';
 import { UsersService } from '../users/users.service';
-import { extractUserPayload } from '../utils/extractUserPayload';
+import { extractUserPayload } from '@app/common';
 
 @Injectable()
 export class AuthService {

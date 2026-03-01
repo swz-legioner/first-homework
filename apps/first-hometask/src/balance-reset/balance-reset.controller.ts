@@ -1,7 +1,7 @@
 import { Controller, Post, UnauthorizedException } from '@nestjs/common';
 
 import { User } from '../users/user.decorator';
-import { type UserPayload } from '../utils/extractUserPayload';
+import { type UserPayload } from '@app/common';
 
 import { BalanceResetService } from './balance-reset.service';
 import { BalanceResetDto } from './dto/balance-reset.dto';

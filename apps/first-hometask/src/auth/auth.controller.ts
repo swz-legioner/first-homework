@@ -10,8 +10,8 @@ import { SignInUserDto, SignInUserSchema } from './dto/sign-in-user.dto';
 import { SignUpUserDto, SignUpUserSchema } from './dto/sign-up-user.dto';
 import { TokensDto } from './dto/tokens.dto';
 
-import { Public } from '../common/decorators/is-public';
-import { ZodValidationPipe } from '../common/pipes/zod-validation.pipe';
+import { Public } from '@app/common';
+import { ZodValidationPipe } from '@app/common';
 import { LoginDocs } from './docs/login.docs';
 import { RegisterDocs } from './docs/register.docs';
 import { RefreshDocs } from './docs/refresh.docs';

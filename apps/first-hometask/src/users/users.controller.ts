@@ -39,10 +39,12 @@ import { SendMoneyDto, SendMoneySchema } from './dto/send-money.dto';
 
 import { FileValidationPipe } from './pipes/file-size-validation.pipe';
 
-import { ZodValidationPipe } from '../common/pipes/zod-validation.pipe';
-import { type UserPayload } from '../utils/extractUserPayload';
+import { ZodValidationPipe, type UserPayload } from '@app/common';
 
+import { AddAvatarDocs } from './docs/add-avatar.docs';
+import { DeleteAvatarDocs } from './docs/delete-avatar.docs';
 import { DeleteUserDocs } from './docs/delete-user.docs';
+import { GetAvatarDocs } from './docs/get-avatar.docs';
 import { GetBalanceDocs } from './docs/get-balance.docs';
 import { GetMostActiveUsersDocs } from './docs/get-most-active-users.docs';
 import { GetSelfDocs } from './docs/get-self.docs';
@@ -50,9 +52,6 @@ import { GetUserDocs } from './docs/get-user.docs';
 import { GetUsersDocs } from './docs/get-users.docs';
 import { SendMoneyDocs } from './docs/send-money.docs';
 import { UpdateUserDocs } from './docs/update-user.docs';
-import { GetAvatarDocs } from './docs/get-avatar.docs';
-import { AddAvatarDocs } from './docs/add-avatar.docs';
-import { DeleteAvatarDocs } from './docs/delete-avatar.docs';
 
 @Controller('users')
 @ApiBearerAuth('Authorization')

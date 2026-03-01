@@ -32,8 +32,10 @@
         "@nestjs/core": "^11.0.1",
         "@nestjs/jwt": "^11.0.1",
         "@nestjs/platform-express": "^11.0.1",
+        "@nestjs/platform-socket.io": "^11.1.14",
         "@nestjs/swagger": "^11.2.1",
         "@nestjs/typeorm": "^11.0.0",
+        "@nestjs/websockets": "^11.1.14",
         "@swc/cli": "^0.7.8",
         "@swc/core": "^1.13.5",
         "bcrypt": "^6.0.0",
@@ -45,6 +47,7 @@
         "pg": "^8.16.3",
         "reflect-metadata": "^0.2.2",
         "rxjs": "^7.8.1",
+        "socket.io": "^4.8.3",
         "ts-loader": "^9.5.4",
         "typeorm": "^0.3.27",
         "typeorm-transactional": "^0.5.0",
@@ -90,8 +93,12 @@
         "coverageDirectory": "./coverage",
         "testEnvironment": "node",
         "roots": [
-            "<rootDir>/apps/"
-        ]
+            "<rootDir>/apps/",
+            "<rootDir>/libs/"
+        ],
+        "moduleNameMapper": {
+            "^@app/common(|/.*)$": "<rootDir>/libs/common/src/$1"
+        }
     },
     "lint-staged": {
         "*.{js, jsx,ts,tsx}": [

@@ -9,11 +9,11 @@ import { Reflector } from '@nestjs/core';
 import { JwtService } from '@nestjs/jwt';
 import { Request } from 'express';
 
-import { IS_PUBLIC_KEY } from '../common/decorators/is-public';
-import { extractUserPayload } from '../utils/extractUserPayload';
+import { IS_PUBLIC_KEY, extractUserPayload } from '@app/common';
 
 import { User } from '../users/user.entity';
 import { UsersService } from '../users/users.service';
+import { extractTokenFromHeader } from '@app/common/utils/extractTokenFromHeader';
 
 @Injectable()
 export class AuthGuard implements CanActivate {
@@ -72,7 +72,6 @@ export class AuthGuard implements CanActivate {
     }
 
     private extractTokenFromHeader(request: Request): string | undefined {
-        const [type, token] = request.headers.authorization?.split(' ') ?? [];
-        return type === 'Bearer' ? token : undefined;
+        return extractTokenFromHeader(request.headers.authorization);
     }
 }

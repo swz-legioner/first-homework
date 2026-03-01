@@ -1,7 +1,8 @@
 import 'dotenv/config';
 
 import { DataSource } from 'typeorm';
-import { getAppConfig } from './config/app.config';
+
+import { getEnv } from '@app/common';
 
 import { User } from './users/user.entity';
 import { Avatar } from './users/avatars.entity';
@@ -17,7 +18,7 @@ const {
     POSTGRES_PASSWORD,
     POSTGRES_PORT,
     POSTGRES_USER,
-} = getAppConfig();
+} = getEnv();
 
 export const AppDataSource = new DataSource({
     type: 'postgres',
