@@ -29,8 +29,11 @@ export class BalanceConsumer extends WorkerHost {
 
 function sleep() {
     return new Promise<void>((res) => {
-        setTimeout(() => {
-            res();
-        }, 5000);
+        setTimeout(
+            () => {
+                res();
+            },
+            10 * 60 * 1000,
+        );
     });
 }

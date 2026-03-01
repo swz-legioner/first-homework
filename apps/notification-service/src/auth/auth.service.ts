@@ -1,5 +1,4 @@
-import { extractUserPayload } from '@app/common';
-import { extractTokenFromHeader } from '@app/common/utils/extractTokenFromHeader';
+import { extractTokenFromHeader, extractUserPayload } from '@app/common';
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';

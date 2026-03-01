@@ -1,16 +1,35 @@
 import { NestFactory } from '@nestjs/core';
+import { MicroserviceOptions, Transport } from '@nestjs/microservices';
 import { NotificationServiceModule } from './notification-service.module';
 
-async function bootstrap() {
-    const app = await NestFactory.create(NotificationServiceModule);
-    const port = process.env.port ?? 3001;
-    await app.listen(port);
+import { NotificationService } from '@app/common';
 
-    return { port };
+import getConfig from './config/app.config';
+
+async function bootstrap() {
+    const config = getConfig();
+
+    const app = await NestFactory.create(NotificationServiceModule);
+
+    app.connectMicroservice<MicroserviceOptions>({
+        transport: Transport.KAFKA,
+        options: {
+            client: {
+                brokers: [`localhost:${config.kafka.first_port}`],
+            },
+            consumer: {
+                groupId: NotificationService.GROUP_ID,
+            },
+        },
+    });
+
+    await app.startAllMicroservices();
+
+    await app.listen(config.http.notifications_port);
 }
 bootstrap()
-    .then(({ port }) => {
-        console.log('Server started at', port);
+    .then(() => {
+        console.log('Server started');
     })
     .catch((e) => {
         console.log('Server failed with error: ', e);

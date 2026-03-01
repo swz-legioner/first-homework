@@ -1,23 +1,26 @@
 import KeyvRedis, { Keyv } from '@keyv/redis';
+import { BullModule } from '@nestjs/bullmq';
 import { CacheModule } from '@nestjs/cache-manager';
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigType } from '@nestjs/config';
+import { ClientsModule, Transport } from '@nestjs/microservices';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { BullModule } from '@nestjs/bullmq';
+import { DataSource } from 'typeorm';
 import { addTransactionalDataSource } from 'typeorm-transactional';
 
 import { AuthModule } from './auth/auth.module';
 
+import { Avatar } from './users/avatars.entity';
 import { User } from './users/user.entity';
 import { UsersModule } from './users/users.module';
 
-import { Avatar } from './users/avatars.entity';
-
 import { S3Module } from './providers/files/s3/s3.module';
 
-import appConfig from './config/app.config';
-import { DataSource } from 'typeorm';
 import { BalanceResetModule } from './balance-reset/balance-reset.module';
+
+import { NotificationService } from '@app/common';
+
+import appConfig from './config/app.config';
 
 @Module({
     imports: [
@@ -76,6 +79,32 @@ import { BalanceResetModule } from './balance-reset/balance-reset.module';
                     },
                 };
             },
+        }),
+        ClientsModule.registerAsync({
+            isGlobal: true,
+            clients: [
+                {
+                    imports: [ConfigModule],
+                    inject: [appConfig.KEY],
+                    name: NotificationService.NAME,
+                    useFactory: (config: ConfigType<typeof appConfig>) => {
+                        return {
+                            transport: Transport.KAFKA,
+                            options: {
+                                client: {
+                                    clientId: NotificationService.CLIENT_ID,
+                                    brokers: [
+                                        `localhost:${config.kafka.first_port}`,
+                                    ],
+                                },
+                                consumer: {
+                                    groupId: NotificationService.GROUP_ID,
+                                },
+                            },
+                        };
+                    },
+                },
+            ],
         }),
         UsersModule,
         AuthModule,

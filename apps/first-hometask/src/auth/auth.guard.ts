@@ -11,9 +11,9 @@ import { Request } from 'express';
 
 import { IS_PUBLIC_KEY, extractUserPayload } from '@app/common';
 
+import { extractTokenFromHeader } from '@app/common';
 import { User } from '../users/user.entity';
 import { UsersService } from '../users/users.service';
-import { extractTokenFromHeader } from '@app/common/utils/extractTokenFromHeader';
 
 @Injectable()
 export class AuthGuard implements CanActivate {

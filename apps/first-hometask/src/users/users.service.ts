@@ -1,10 +1,12 @@
 import {
     BadRequestException,
+    Inject,
     Injectable,
     InternalServerErrorException,
     Logger,
     NotFoundException,
 } from '@nestjs/common';
+import { ClientKafka } from '@nestjs/microservices';
 import { InjectRepository } from '@nestjs/typeorm';
 import {
     FindManyOptions,
@@ -21,11 +23,17 @@ import { Avatar } from './avatars.entity';
 
 import { SignUpUserDto } from '../auth/dto/sign-up-user.dto';
 
+import { MAX_AVATAR_COUNT } from './const/max-avatar-count';
 import { USERS_PAGE_SIZE } from './const/users-page-size';
+
+import {
+    MoneySentEvent,
+    MoneySentEventName,
+    NotificationService,
+} from '@app/common';
 
 import { IFileService } from '../providers/files/files.adapter';
 import { IUploadedMulterFile } from '../providers/files/s3/interfaces/upload-file.interface';
-import { MAX_AVATAR_COUNT } from './const/max-avatar-count';
 
 const PublicUserColumns: (keyof User)[] = [
     'id',
@@ -47,6 +55,8 @@ export class UsersService {
         @InjectRepository(Avatar)
         private avatarsRepository: Repository<Avatar>,
         private fileService: IFileService,
+        @Inject(NotificationService.NAME)
+        private readonly notificationClient: ClientKafka,
     ) {}
 
     private async _findOne(
@@ -352,6 +362,12 @@ export class UsersService {
         targetUser.balance = String(targetNewBalance);
 
         await this.usersRepository.save(targetUser);
+
+        this.notificationClient.emit(
+            MoneySentEventName,
+            new MoneySentEvent(source, target, amount),
+        );
+
         this.logger.log(
             `Send money success sourceUserId=${source} targetUserId=${target} amount=${amount}`,
         );
