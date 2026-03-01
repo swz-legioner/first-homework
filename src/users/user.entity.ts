@@ -2,8 +2,10 @@ import {
     Column,
     DeleteDateColumn,
     Entity,
+    OneToMany,
     PrimaryGeneratedColumn,
 } from 'typeorm';
+import { Avatar } from './avatars.entity';
 
 @Entity('users')
 export class User {
@@ -24,6 +26,12 @@ export class User {
 
     @Column('text')
     description: string;
+
+    @Column('numeric')
+    balance: string;
+
+    @OneToMany(() => Avatar, (avatar) => avatar.user)
+    avatars: Avatar[];
 
     @DeleteDateColumn()
     deletedDate?: Date;

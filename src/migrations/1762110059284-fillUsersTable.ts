@@ -1,10 +1,10 @@
-import { User } from '../users/user.entity';
-import { MigrationInterface, QueryRunner } from 'typeorm';
-import { InsertResult } from 'typeorm/browser';
-
 import bcrypt from 'bcrypt';
 import { appendFile, writeFile } from 'fs/promises';
 import path from 'path';
+import { MigrationInterface, QueryRunner } from 'typeorm';
+import { InsertResult } from 'typeorm/browser';
+
+import { User } from '../users/user.entity';
 
 const TEST_USERS_COUNT = 130;
 
@@ -44,6 +44,22 @@ export class FillUsersTable1762110059284 implements MigrationInterface {
 
         await writeFile(credentialsFile, 'user, password');
 
+        if (typeof process.env.ADMIN_PASSWORD === 'string') {
+            processing.push(
+                // Только этот юзер имеет право запрашивать обнуление балансов через API
+                userRepository.insert({
+                    username: 'admin',
+                    password: await bcrypt.hash(
+                        process.env.ADMIN_PASSWORD,
+                        salt,
+                    ),
+                    email: 'admin@admin.com',
+                    age: 100,
+                    description: 'i am admin',
+                }),
+            );
+        }
+
         for (let i = 0; i < TEST_USERS_COUNT; i++) {
             const username = randomString(randomInt(4, 32));
             const password = randomString(randomInt(8, 32));
@@ -58,10 +74,12 @@ export class FillUsersTable1762110059284 implements MigrationInterface {
                 description: '',
             };
 
-            user.description = `I'm a ${user.username}.
+            if (Math.random() > 0.3) {
+                user.description = `I'm a ${user.username}.
             My email - ${user.email}.
             I am ${user.age} years old.
             I can tell you about myself that i'm ${randomString(50)}.`;
+            }
 
             processing.push(userRepository.insert(user));
         }
