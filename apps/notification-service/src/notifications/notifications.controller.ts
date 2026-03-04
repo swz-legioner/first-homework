@@ -26,11 +26,6 @@ export class NotificationController {
 
     @EventPattern(MoneySentEventName)
     async handleMoneySent(data: MoneySentEvent) {
-        await this.notificationGateway.sendBalanceNotification(
-            data.from,
-            data.to,
-            data.amount,
-            data.timestamp,
-        );
+        await this.notificationGateway.sendBalanceNotification(data);
     }
 }

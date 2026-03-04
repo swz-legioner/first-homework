@@ -1,5 +1,4 @@
 import { Logger } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
 import {
     OnGatewayConnection,
     OnGatewayDisconnect,
@@ -8,12 +7,12 @@ import {
     WebSocketGateway,
     WebSocketServer,
 } from '@nestjs/websockets';
-import { Model } from 'mongoose';
 import { DefaultEventsMap, Server, Socket } from 'socket.io';
 
 import { AuthService } from '../auth/auth.service';
-import { Event } from '../schemas/event-schema';
-import { MoneySentEventName } from '@app/common';
+import { NotificationsService } from './notifications.service';
+
+import { MoneySentEvent } from '@app/common';
 
 @WebSocketGateway()
 export class NotificationsGateway
@@ -24,7 +23,7 @@ export class NotificationsGateway
 
     constructor(
         private authService: AuthService,
-        @InjectModel(Event.name) private eventModel: Model<Event>,
+        private notificationsService: NotificationsService,
     ) {}
 
     afterInit() {
@@ -82,33 +81,10 @@ export class NotificationsGateway
         return this.io.to(to).emit('notification', message);
     }
 
-    async sendBalanceNotification(
-        from: string,
-        to: string,
-        amount: number,
-        timestamp: number,
-    ) {
-        const data = {
-            event: MoneySentEventName,
-            from,
-            to,
-            amount,
-            timestamp,
-        };
+    async sendBalanceNotification(data: MoneySentEvent) {
+        const { to, message } =
+            await this.notificationsService.createAndSaveBalanceEvent(data);
 
-        this.logger.log(
-            `Sending to user=${to} message=${JSON.stringify(data)}`,
-        );
-
-        const createdEvent = new this.eventModel({
-            from,
-            to,
-            amount,
-            timestamp,
-        });
-
-        await createdEvent.save();
-
-        return this.io.to(to).emit('notification', data);
+        return this.io.to(to).emit('notification', message);
     }
 }
