@@ -22,7 +22,7 @@ import appConfig from './config/app.config';
             inject: [appConfig.KEY],
             useFactory: (config: ConfigType<typeof appConfig>) => {
                 return {
-                    uri: `mongodb://${config.mongo.user}:${config.mongo.password}@localhost:${config.mongo.port}`,
+                    uri: `mongodb://${config.mongo.user}:${config.mongo.password}@${config.mongo.url}:${config.mongo.port}`,
                     dbName: 'homework',
                 };
             },

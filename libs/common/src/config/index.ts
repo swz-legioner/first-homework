@@ -17,7 +17,9 @@ export const appConfigSchema = z.object({
     REDIS_PASSWORD: z.string().min(1).default(''),
     KAFKA_PORT_1: z.string().min(1).default(''),
     KAFKA_PORT_2: z.string().min(1).default(''),
+    KAFKA_URL: z.string().min(1).default('localhost'),
     ADMIN_PASSWORD: z.string().min(1),
+    MONGODB_URL: z.string().min(1).default('localhost'),
     MONGODB_PORT: z.string().min(1).default('27017'),
     MONGODB_USER: z.string(),
     MONGODB_PASSWORD: z.string(),
@@ -63,8 +65,10 @@ export function getConfig(env?: AppConfigEnv) {
         kafka: {
             first_port: env.KAFKA_PORT_1,
             second_port: env.KAFKA_PORT_2,
+            url: env.KAFKA_URL,
         },
         mongo: {
+            url: env.MONGODB_URL,
             port: env.MONGODB_PORT,
             user: env.MONGODB_USER,
             password: env.MONGODB_PASSWORD,

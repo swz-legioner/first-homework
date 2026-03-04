@@ -16,7 +16,7 @@ async function bootstrap() {
         transport: Transport.KAFKA,
         options: {
             client: {
-                brokers: [`localhost:${config?.kafka.first_port}`],
+                brokers: [`${config?.kafka.url}:${config?.kafka.first_port}`],
             },
             consumer: {
                 groupId: NotificationService.GROUP_ID,

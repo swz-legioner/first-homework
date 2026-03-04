@@ -94,7 +94,7 @@ import appConfig from './config/app.config';
                                 client: {
                                     clientId: NotificationService.CLIENT_ID,
                                     brokers: [
-                                        `localhost:${config.kafka.first_port}`,
+                                        `${config.kafka.url}:${config.kafka.first_port}`,
                                     ],
                                 },
                                 consumer: {
