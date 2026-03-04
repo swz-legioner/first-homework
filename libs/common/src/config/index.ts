@@ -71,3 +71,5 @@ export function getConfig(env?: AppConfigEnv) {
         },
     };
 }
+
+export type AppConfig = ReturnType<typeof getConfig>;

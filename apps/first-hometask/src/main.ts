@@ -1,21 +1,21 @@
 import 'reflect-metadata';
 
-import { ConfigService, ConfigType } from '@nestjs/config';
+import { getQueueToken } from '@nestjs/bullmq';
+import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { Queue } from 'bullmq';
 import { initializeTransactionalContext } from 'typeorm-transactional';
-import { getQueueToken } from '@nestjs/bullmq';
 
+import { AppConfig } from '@app/common';
 import { AppModule } from './app.module';
-import appConfig from './config/app.config';
 
 async function bootstrap() {
     initializeTransactionalContext();
 
     const app = await NestFactory.create(AppModule, { cors: true });
-    const configService = app.get(ConfigService);
-    const { http } = configService.get('app') as ConfigType<typeof appConfig>;
+    const appConfig: AppConfig | undefined = app.get(ConfigService).get('app');
+    const port = appConfig?.http.port ?? 3001;
 
     const config = new DocumentBuilder()
         .setTitle('Homework API')
@@ -62,7 +62,7 @@ async function bootstrap() {
             opts: { removeOnComplete: true, removeOnFail: 1000 },
         },
     );
-    await app.listen(http.port);
+    await app.listen(port);
 }
 
 bootstrap()
